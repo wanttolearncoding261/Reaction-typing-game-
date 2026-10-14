@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reaction Type Pro</title>
+    <style>
+        :root {
+            --bg: #0f172a;
+            --text: #f8fafc;
+            --accent: #38bdf8;
+            --error: #ef4444;
+            --success: #22c55e;
+            --panel: rgba(255, 255, 255, 0.05);
+            --border: rgba(255, 255, 255, 0.1);
+        }
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            font-family: sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+        #app-container {
+            text-align: center;
+            width: 90%;
+            max-width: 600px;
+            padding: 2rem;
+            border-radius: 1.5rem;
+            background: var(--panel);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+            border: 1px solid var(--border);
+        }
+        h1 {
+            font-size: 3rem;
+            margin-bottom: 0.5rem;
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 4px;
+        }
+        .subtitle { opacity: 0.6; margin-bottom: 2rem; }
+        .tabs {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 2rem;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 1rem;
+        }
+        .tab-btn {
+            background: transparent;
+            border: none;
+            color: var(--text);
+            padding: 0.5rem 1.5rem;
+            cursor: pointer;
+            font-weight: bold;
+            border-radius: 0.5rem;
+            opacity: 0.5;
+        }
+        .tab-btn.active {
+            opacity: 1;
+            background: var(--accent);
+            color: var(--bg);
+        }
+        .panel { display: none; }
+        .panel.active { display: block; }
+        .setting-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        .setting-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            max-width: 300px;
+        }
+        select, input {
+            background: var(--bg);
+            color: white;
+            border: 1px solid var(--border);
+            padding: 0.4rem;
+            border-radius: 0.3rem;
+        }
+        #word-to-type {
+            font-size: 4rem;
+            font-weight: bold;
+            margin-bottom: 2rem;
+        }
+        #input-field {
+            font-size: 2rem;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            border: 2px solid var(--accent);
+            background: transparent;
+            color: white;
+            text-align: center;
+            width: 80%;
+        }
+        #input-field.invalid { border-color: var(--error); }
+        .stats-bar {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 2rem;
+            font-family: monospace;
+        }
+        #start-btn {
+            font-size: 1.5rem;
+            padding: 1rem 3rem;
+            cursor: pointer;
+            background: var(--accent);
+            color: var(--bg);
+            border: none;
+            border-radius: 0.8rem;
+            font-weight: bold;
+        }
+        .leaderboard-table {
+            width: 100%;
+            max-width: 400px;
+            margin: 0 auto;
+            border-collapse: collapse;
+            font-family: monospace;
+        }
+        .leaderboard-table th, .leaderboard-table td {
+            padding: 0.75rem;
+            border-bottom: 1px solid var(--border);
+            text-align: left;
+        }
+        .leaderboard-table th {
+            color: var(--accent);
+            text-transform: uppercase;
+            font-size: 0.9rem;
+        }
+        .rank-1 { color: gold; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <div id="app-container">
+        <h1>TYPE FAST</h1>
+        <p class="subtitle">Master the keyboard</p>
+
+        <div id="home-screen" class="panel active">
+            <div class="tabs">
+                <button class="tab-btn active" id="btn-play" onclick="showTab('play-tab')">PLAY</button>
+                <button class="tab-btn" id="btn-leader" onclick="showTab('leaderboard-tab')">LEADERBOARD</button>
+                <button class="tab-btn" id="btn-settings" onclick="showTab('settings-tab')">SETTINGS</button>
+            </div>
+
+            <div id="play-tab" class="panel active">
+                <div class="setting-group">
+                    <div class="setting-item">
+                        <label>Username</label>
+                        <input type="text" id="username-input" placeholder="Enter name..." maxlength="15">
+                    </div>
+                    <div id="highscore-display">All-time Best: <span id="highscore-val">--</span>s</div>
+                    <button id="start-btn">LAUNCH GAME</button>
+                </div>
+            </div>
+
+            <div id="leaderboard-tab" class="panel">
+                <div class="setting-group">
+                    <h3>Global Top 10</h3>
+                    <table class="leaderboard-table">
+                        <thead>
+                            <tr><th>Rank</th><th>Name</th><th>Time</th></tr>
+                        </thead>
+                        <tbody id="leaderboard-body">
+                            <tr><td colspan="3">Loading scores...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="settings-tab" class="panel">
+                <div class="setting-group">
+                    <div class="setting-item">
+                        <label>Difficulty</label>
+                        <select id="difficulty">
+                            <option value="easy">Easy</option>
+                            <option value="medium" selected>Medium</option>
+                            <option value="hard">Hard</option>
+                        </select>
+                    </div>
+                    <div class="setting-item">
+                        <label>Words per Round</label>
+                        <input type="number" id="words-per-round" value="5" min="1" max="20">
+                    </div>
+                    <div class="setting-item">
+                        <label>Total Rounds</label>
+                        <input type="number" id="total-rounds" value="3" min="1" max="10">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="game-screen" class="panel">
+            <div id="word-to-type">READY?</div>
+            <input type="text" id="input-field" placeholder="Type here..." autocomplete="off">
+            <div class="stats-bar">
+                <span>Round: <span id="cur-round">1</span>/<span id="max-round">3</span></span>
+                <span>Word: <span id="cur-word">1</span>/<span id="max-word">5</span></span>
+                <span>Time: <span id="timer">0.000</span>s</span>
+            </div>
+        </div>
+
+        <div id="result-screen" class="panel">
+            <h2 id="result-title">Session Complete!</h2>
+            <div id="final-stats" style="font-size: 1.5rem; margin: 2rem 0;"></div>
+            <button id="back-btn" class="tab-btn active" style="padding: 1rem 2rem;">BACK TO HOME</button>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyBzpC0aQDot_s1YGzQZMHxGbTmd3GaIEQs",
+            authDomain: "reaction-typing-game.firebaseapp.com",
+            databaseURL: "https://reaction-typing-game-default-rtdb.firebaseio.com",
+            projectId: "reaction-typing-game",
+            storageBucket: "reaction-typing-game.firebasestorage.app",
+            messagingSenderId: "820583260284",
+            appId: "1:820583260284:web:af0aac6c1c420acfa1e9f9",
+            measurementId: "G-57BFPK7Z8"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        const wordBank = {
+            easy: ["cat", "dog", "sun", "red", "blue", "fast", "jump", "book", "fish", "tree", "fire", "wind"],
+            medium: ["velocity", "keyboard", "algorithm", "javascript", "reaction", "phantom", "spectrum", "synapse", "momentum", "parallax"],
+            hard: ["phenomenon", "idiosyncrasy", "quintessential", "synchronicity", "epistemology", "metamorphosis", "conscientious", "juxtaposition"]
+        };
+
+        let gameSettings = { difficulty: 'medium', wordsPerRound: 5, totalRounds: 3 };
+        let gameState = { currentRound: 1, currentWordIdx: 0, roundStartTime: 0, totalSessionTime: 0, roundWords: [], username: "" };
+        let timerInterval = null;
+        let highscore = localStorage.getItem("typingHighscore") || Infinity;
+
+        const homeScreen = document.getElementById("home-screen");
+        const gameScreen = document.getElementById("game-screen");
+        const resultScreen = document.getElementById("result-screen");
+        const wordDisplay = document.getElementById("word-to-type");
+        const inputField = document.getElementById("input-field");
+        const timerText = document.getElementById("timer");
+        const highscoreVal = document.getElementById("highscore-val");
+
+        if (highscore !== Infinity) highscoreVal.textContent = parseFloat(highscore).toFixed(3);
+
+        function showTab(tabId) {
+            document.querySelectorAll(".tab-btn").forEach(btn => btn.classList.remove("active"));
+            if(tabId === 'play-tab') document.getElementById('btn-play').classList.add('active');
+            if(tabId === 'leaderboard-tab') document.getElementById('btn-leader').classList.add('active');
+            if(tabId === 'settings-tab') document.getElementById('btn-settings').classList.add('active');
+
+            document.getElementById("play-tab").classList.remove("active");
+            document.getElementById("leaderboard-tab").classList.remove("active");
+            document.getElementById("settings-tab").classList.remove("active");
+            document.getElementById(tabId).classList.add("active");
+            if (tabId === 'leaderboard-tab') loadLeaderboard();
+        }
+
+        function updateTimer() {
+            const diff = (performance.now() - gameState.roundStartTime) / 1000;
+            timerText.textContent = diff.toFixed(3);
+        }
+
+        function startSession() {
+            const userVal = document.getElementById("username-input").value.trim();
+            if (!userVal) {
+                alert("Please enter a username!");
+                return;
+            }
+            gameState.username = userVal;
+            gameSettings.difficulty = document.getElementById("difficulty").value;
+            gameSettings.wordsPerRound = parseInt(document.getElementById("words-per-round").value);
+            gameSettings.totalRounds = parseInt(document.getElementById("total-rounds").value);
+            gameState.currentRound = 1;
+            gameState.totalSessionTime = 0;
+            document.getElementById("max-round").textContent = gameSettings.totalRounds;
+            document.getElementById("max-word").textContent = gameSettings.wordsPerRound;
+            homeScreen.classList.remove("active");
+            gameScreen.classList.add("active");
+            startRound();
+        }
+
+        function startRound() {
+            gameState.currentWordIdx = 0;
+            const bank = [...wordBank[gameSettings.difficulty]];
+            for (let i = bank.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [bank[i], bank[j]] = [bank[j], bank[i]];
+            }
+            gameState.roundWords = [];
+            for(let i=0; i < gameSettings.wordsPerRound; i++) {
+                gameState.roundWords.push(bank[i % bank.length]);
+            }
+            document.getElementById("cur-round").textContent = gameState.currentRound;
+            nextWord();
+        }
+
+        function nextWord() {
+            inputField.value = "";
+            inputField.focus();
+            const word = gameState.roundWords[gameState.currentWordIdx];
+            wordDisplay.textContent = word;
+            document.getElementById("cur-word").textContent = gameState.currentWordIdx + 1;
+            gameState.roundStartTime = performance.now();
+            clearInterval(timerInterval);
+            timerInterval = setInterval(updateTimer, 10);
+        }
+
+        inputField.addEventListener("input", () => {
+            const target = gameState.roundWords[gameState.currentWordIdx];
+            if (!target.startsWith(inputField.value)) {
+                inputField.classList.add("invalid");
+            } else {
+                inputField.classList.remove("invalid");
+            }
+            if (inputField.value === target) {
+                const time = (performance.now() - gameState.roundStartTime) / 1000;
+                gameState.totalSessionTime += time;
+                gameState.currentWordIdx++;
+                if (gameState.currentWordIdx < gameSettings.wordsPerRound) {
+                    nextWord();
+                } else {
+                    endRound();
+                }
+            }
+        });
+
+        function endRound() {
+            clearInterval(timerInterval);
+            if (gameState.currentRound < gameSettings.totalRounds) {
+                gameState.currentRound++;
+                setTimeout(startRound, 500);
+            } else {
+                showResults();
+            }
+        }
+
+        async function showResults() {
+            gameScreen.classList.remove("active");
+            resultScreen.classList.add("active");
+            const avg = (gameState.totalSessionTime / (gameSettings.totalRounds * gameSettings.wordsPerRound)).toFixed(3);
+            document.getElementById("final-stats").innerHTML = `Total: ${gameState.totalSessionTime.toFixed(3)}s<br>Avg: ${avg}s`;
+            if (gameState.totalSessionTime < highscore) {
+                highscore = gameState.totalSessionTime;
+                localStorage.setItem("typingHighscore", highscore);
+                highscoreVal.textContent = parseFloat(highscore).toFixed(3);
+            }
+            try {
+                await database.ref('leaderboard').push({
+                    name: gameState.username,
+                    score: gameState.totalSessionTime,
+                    timestamp: Date.now()
+                });
+                document.getElementById("result-title").textContent = "Score Uploaded!";
+            } catch (e) { console.error(e); }
+        }
+
+        function loadLeaderboard() {
+            const body = document.getElementById("leaderboard-body");
+            body.innerHTML = '<tr><td colspan="3">Loading...</td></tr>';
+            database.ref('leaderboard').orderByChild('score').limitToFirst(10).once('value').then(snap => {
+                const data = snap.val();
+                if (!data) {
+                    body.innerHTML = '<tr><td colspan="3">No scores yet!</td></tr>';
+                    return;
+                }
+                const scores = [];
+                snap.forEach(child => scores.push(child.val()));
+                body.innerHTML = '';
+                scores.forEach((s, i) => {
+                    const row = document.createElement('tr');
+                    if (i === 0) row.classList.add('rank-1');
+                    row.innerHTML = `<td>${i+1}</td><td>${s.name}</td><td>${s.score.toFixed(3)}s</td>`;
+                    body.appendChild(row);
+                });
+            }).catch(e => { body.innerHTML = '<tr><td colspan="3">Error loading.</td></tr>'; });
+        }
+
+        document.getElementById("start-btn").addEventListener("click", startSession);
+        document.getElementById("back-btn").addEventListener("click", () => {
+            resultScreen.classList.remove("active");
+            homeScreen.classList.add("active");
+        });
+    </script>
+</body>
+</html>
