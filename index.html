@@ -120,24 +120,6 @@
               border-radius: 0.8rem;
               font-weight: bold;
           }
-          .leaderboard-table {
-              width: 100%;
-              max-width: 400px;
-              margin: 0 auto;
-              border-collapse: collapse;
-              font-family: monospace;
-          }
-          .leaderboard-table th, .leaderboard-table td {
-              padding: 0.75rem;
-              border-bottom: 1px solid var(--border);
-              text-align: left;
-          }
-          .leaderboard-table th {
-              color: var(--accent);
-              text-transform: uppercase;
-              font-size: 0.9rem;
-          }
-          .rank-1 { color: gold; font-weight: bold; }
       </style>
   </head>
   <body>
@@ -149,35 +131,14 @@
           <div id="home-screen" class="panel active">
               <div class="tabs">
                   <button class="tab-btn active" id="btn-play" onclick="showTab('play-tab')">PLAY</button>
-                  <button class="tab-btn" id="btn-leader"
-  onclick="showTab('leaderboard-tab')">LEADERBOARD</button>
                   <button class="tab-btn" id="btn-settings"
   onclick="showTab('settings-tab')">SETTINGS</button>
               </div>
 
               <div id="play-tab" class="panel active">
                   <div class="setting-group">
-                      <div class="setting-item">
-                          <label>Username</label>
-                          <input type="text" id="username-input" placeholder="Enter name..."
-  maxlength="15">
-                      </div>
                       <div id="highscore-display">All-time Best: <span id="highscore-val">--</span>s</div>
                       <button id="start-btn">LAUNCH GAME</button>
-                  </div>
-              </div>
-
-              <div id="leaderboard-tab" class="panel">
-                  <div class="setting-group">
-                      <h3>Global Top 10</h3>
-                      <table class="leaderboard-table">
-                          <thead>
-                              <tr><th>Rank</th><th>Name</th><th>Time</th></tr>
-                          </thead>
-                          <tbody id="leaderboard-body">
-                              <tr><td colspan="3">Loading scores...</td></tr>
-                          </tbody>
-                      </table>
                   </div>
               </div>
 
@@ -221,36 +182,26 @@
           </div>
       </div>
 
-      <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-      <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
-
       <script>
-          const firebaseConfig = {
-              apiKey: "AIzaSyBzpC0aQDot_s1YGzQZMHxGbTmd3GaIEQs",
-              authDomain: "reaction-typing-game.firebaseapp.com",
-              databaseURL: "https://reaction-typing-game-default-rtdb.firebaseio.com",
-              projectId: "reaction-typing-game",
-              storageBucket: "reaction-typing-game.firebasestorage.app",
-              messagingSenderId: "820583260284",
-              appId: "1:820583260284:web:af0aac6c1c420acfa1e9f9",
-              measurementId: "G-57BFPK7Z8"
-          };
-
-          firebase.initializeApp(firebaseConfig);
-          const database = firebase.database();
-
           const wordBank = {
               easy: ["cat", "dog", "sun", "red", "blue", "fast", "jump", "book", "fish", "tree", "fire",
-  "wind"],
+  "wind", "ball", "cake", "door", "egg", "frog", "gold", "hand", "ice", "jump", "kite", "leaf", "moon",
+  "nose", "owl", "pink", "quiz", "rain", "star", "tent", "unit", "vase", "wolf", "xray", "yard", "zeta","jona" ],
               medium: ["velocity", "keyboard", "algorithm", "javascript", "reaction", "phantom",
-  "spectrum", "synapse", "momentum", "parallax"],
+  "spectrum", "synapse", "momentum", "parallax", "absolute", "balance", "capacity", "density", "element",
+  "fraction", "gradient", "horizon", "internal", "junction", "kinetic", "latitude", "molecule", "network",
+  "optimize", "priority", "quantity", "resident", "standard", "terminal", "ultimate", "vertical",
+  "waveform", "xenolith", "yield", "zenith"],
               hard: ["phenomenon", "idiosyncrasy", "quintessential", "synchronicity", "epistemology",
-  "metamorphosis", "conscientious", "juxtaposition"]
+  "metamorphosis", "conscientious", "juxtaposition", "ambiguous", "benevolent", "cacophony", "deleterious",
+  "effervescent", "facetious", "garrulous", "hypothesis", "inevitable", "labyrinth", "magnanimous",
+  "nebulous", "obsequious", "perfunctory", "quintessence", "recalcitrant", "superfluous", "trepidation",
+  "ubiquitous", "vacillate", "windfall", "zealousness"]
           };
 
           let gameSettings = { difficulty: 'medium', wordsPerRound: 5, totalRounds: 3 };
           let gameState = { currentRound: 1, currentWordIdx: 0, roundStartTime: 0, totalSessionTime: 0,
-  roundWords: [], username: "" };
+  roundWords: [] };
           let timerInterval = null;
           let highscore = localStorage.getItem("typingHighscore") || Infinity;
 
@@ -267,15 +218,11 @@
           function showTab(tabId) {
               document.querySelectorAll(".tab-btn").forEach(btn => btn.classList.remove("active"));
               if(tabId === 'play-tab') document.getElementById('btn-play').classList.add('active');
-              if(tabId === 'leaderboard-tab')
-  document.getElementById('btn-leader').classList.add('active');
               if(tabId === 'settings-tab') document.getElementById('btn-settings').classList.add('active');
 
               document.getElementById("play-tab").classList.remove("active");
-              document.getElementById("leaderboard-tab").classList.remove("active");
               document.getElementById("settings-tab").classList.remove("active");
               document.getElementById(tabId).classList.add("active");
-              if (tabId === 'leaderboard-tab') loadLeaderboard();
           }
 
           function updateTimer() {
@@ -284,12 +231,6 @@
           }
 
           function startSession() {
-              const userVal = document.getElementById("username-input").value.trim();
-              if (!userVal) {
-                  alert("Please enter a username!");
-                  return;
-              }
-              gameState.username = userVal;
               gameSettings.difficulty = document.getElementById("difficulty").value;
               gameSettings.wordsPerRound = parseInt(document.getElementById("words-per-round").value);
               gameSettings.totalRounds = parseInt(document.getElementById("total-rounds").value);
@@ -357,8 +298,7 @@
               }
           }
 
-          async function showResults() {
-              console.log("Attempting to upload score for:", gameState.username);
+          function showResults() {
               gameScreen.classList.remove("active");
               resultScreen.classList.add("active");
               const avg = (gameState.totalSessionTime / (gameSettings.totalRounds *
@@ -370,44 +310,6 @@
                   localStorage.setItem("typingHighscore", highscore);
                   highscoreVal.textContent = parseFloat(highscore).toFixed(3);
               }
-              try {
-                  console.log("Pushing to Firebase...");
-                  await database.ref('leaderboard').push({
-                      name: gameState.username,
-                      score: gameState.totalSessionTime,
-                      timestamp: Date.now()
-                  });
-                  console.log("Upload successful!");
-                  document.getElementById("result-title").textContent = "Score Uploaded!";
-              } catch (e) {
-                  console.error("Upload failed:", e);
-                  document.getElementById("result-title").textContent = "Upload Failed!";
-              }
-          }
-
-          function loadLeaderboard() {
-              const body = document.getElementById("leaderboard-body");
-              body.innerHTML = '<tr><td colspan="3">Loading...</td></tr>';
-              database.ref('leaderboard').orderByChild('score').limitToFirst(10).once('value').then(snap =>
-  {
-                  const data = snap.val();
-                  if (!data) {
-                      body.innerHTML = '<tr><td colspan="3">No scores yet!</td></tr>';
-                      return;
-                  }
-                  const scores = [];
-                  snap.forEach(child => scores.push(child.val()));
-                  body.innerHTML = '';
-                  scores.forEach((s, i) => {
-                      const row = document.createElement('tr');
-                      if (i === 0) row.classList.add('rank-1');
-                      row.innerHTML = `<td>${i+1}</td><td>${s.name}</td><td>${s.score.toFixed(3)}s</td>`;
-                      body.appendChild(row);
-                  });
-              }).catch(e => {
-                  console.error("Leaderboard load failed:", e);
-                  body.innerHTML = '<tr><td colspan="3">Error loading.</td></tr>';
-              });
           }
 
           document.getElementById("start-btn").addEventListener("click", startSession);
